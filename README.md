@@ -38,14 +38,37 @@ dimensions — those are capped at 1920px instead.
 
 ### Known exceptions
 
-- `2122_hi_res.png` (2.0MB) — the filename says the resolution is the point.
-- `breaklight_prototype_web.png` (4.7MB) and `spacebeaver_prototype_web.png`
-  (4.5MB) — photographs in a lossless container. Each has a `.jpg` twin
-  (`breaklight_prototype.jpg`, `spacebeaver_prototype.jpg`) that is the same
-  picture at ~1MB and is what any page should reference. The PNGs are kept
-  only because removing files from an asset archive is a deliberate decision,
-  not a cleanup; if nothing grows to need them, they can go.
-- `*.xcf` — GIMP sources. They are small, and are not images the site serves.
+Every file currently over the 2MB budget, and why it is accepted. If you add
+to this list, say why — an undocumented file over budget should read as "not
+yet optimised", not "fine".
+
+| File | Size | Dimensions | Why |
+| --- | --- | --- | --- |
+| `breaklight_prototype_web.png` | 4.65MB | 1920x1079 | Photograph in a lossless container; see below. |
+| `spacebeaver_prototype_web.png` | 4.46MB | 1920x1326 | Photograph in a lossless container; see below. |
+| `spacebeaver-draft.png` | 2.96MB | 1354x1241 | Artwork, already well under the dimension cap. |
+| `transflag_patch.png` | 2.55MB | 1365x962 | Merch artwork, already well under the dimension cap. |
+| `cyberpunktits_transcolours.png` | 2.53MB | 1302x1380 | Merch artwork, already well under the dimension cap. |
+
+The bottom three are flat-colour artwork rather than photographs, and they are
+already smaller than the 2560px cap, so resizing is the only lever PNG offers
+and it would cost real quality on files that may serve as print sources. Left
+at full quality deliberately.
+
+The two `_web` PNGs are different: they are photographs, and each has a `.jpg`
+twin (`breaklight_prototype.jpg` at 1.16MB, `spacebeaver_prototype.jpg` at
+0.83MB) that is the same picture — verified by pixel comparison — at a quarter
+of the size. **Reference the `.jpg`, not the `.png`.** The PNGs survive only
+because deleting from an asset archive is a deliberate decision rather than a
+cleanup; with the masters now in `originals/`, dropping them is safe whenever
+someone wants to.
+
+Two things that are *not* exceptions, in case they look like it:
+
+- `2122_hi_res.png` is 1,999,869 bytes — just inside the budget, despite the
+  name. Nothing to do, but it has no headroom if it is ever re-encoded.
+- `*.xcf` — GIMP sources, all under 1MB. They are not images the site serves,
+  and they are well within budget anyway.
 
 ## History
 

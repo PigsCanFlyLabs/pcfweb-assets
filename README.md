@@ -104,6 +104,18 @@ this repository is silently broken images, not the bill.
 `originals/` is safe to keep at whatever size it was captured at — it never
 reaches the image.
 
+### Book covers
+
+Book covers live in `images/book_covers/`, and their masters — where one
+exists — in `originals/book_covers/`, under the same filename as the
+`images/` copy. Only `distributed_computing_4_kids` has a master
+(`.webp`, because that is genuinely what the master is); the four O'Reilly
+covers ship at their native 2100x2756 and were never downscaled, so there is
+nothing to archive for them.
+
+pcfweb references covers by a path **relative to `images/`**, so a cover at
+`images/book_covers/x.jpg` is referenced as `book_covers/x.jpg`.
+
 ## Sizing rules for `images/`
 
 Everything in `images/` is copied into the container **and** duplicated by

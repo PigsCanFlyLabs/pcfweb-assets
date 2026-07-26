@@ -5,6 +5,94 @@ of that repo so its checkout stays small; `pcfweb/build.sh` expects this one
 cloned as a sibling directory and copies the web set into
 `main/static/assets/images/` before building the container image.
 
+## ⚠️ Git LFS is now required on any build host
+
+New and changed images in this repository are stored in [Git LFS](https://git-lfs.com/).
+A plain `git clone` gives you ~130-byte **pointer files** where those images
+should be, unless LFS is installed and the objects have been fetched.
+
+**Before running `pcfweb/build.sh`, on every build host:**
+
+```sh
+git lfs install     # once per machine/user
+git lfs pull        # in this repository, after clone/fetch/checkout
+```
+
+### Why this matters more than it looks
+
+`pcfweb/build.sh` does:
+
+```sh
+rm -rf main/static/assets/images
+cp -af ../pcfweb-assets/images main/static/assets/
+```
+
+It copies whatever is on disk. If the objects were never materialised, it
+copies the pointer files into the Docker image and **the site ships with
+broken images**.
+
+Nothing catches this today. `build.sh` validates that assets are not too
+*large* (`ASSET_MAX_BYTES=5000000`) — a 130-byte pointer sails straight
+through a maximum-size check. There is no minimum, no content-type check, and
+no LFS check. The failure is completely silent:
+
+- the build succeeds,
+- the container image builds and pushes,
+- the deploy is green,
+- and the pages render with broken image icons, with no error in any log.
+
+A companion guard is being added to `pcfweb/build.sh` to detect pointer files
+in `images/` and fail the build. Until that lands, `git lfs pull` is the only
+thing standing between a stale checkout and a broken production site.
+
+### Scope: which files are affected today
+
+Only files stored in LFS can turn into pointers, and today that is a **small
+and growing** subset:
+
+- `.gitattributes` tracks `*.jpg`, `*.jpeg`, `*.png`, `*.gif`, `*.webp`,
+  `*.xcf` (and their uppercase spellings), so **every image added or modified
+  from now on** goes into LFS.
+- Images already committed before LFS was enabled remain ordinary git blobs.
+  They were deliberately left alone — converting them would require rewriting
+  history and force-pushing `main`, which breaks every existing clone.
+
+So a build host that forgets `git lfs pull` currently ships most images fine
+and a handful broken — which is *harder* to notice than a wholesale failure,
+not easier. That set grows with every image touched.
+
+Side effect of the mixed state: in a checkout whose index stat cache has gone
+stale, `git status` may report every pre-LFS image as modified even though the
+bytes on disk are unchanged. Git is comparing the stored raw blob against what
+the LFS clean filter would now produce. **Do not "fix" this with `git commit -a`
+or `git add -A`** — that would convert the entire back catalogue to LFS in one
+unreviewed commit. A fresh clone does not show it.
+
+### Storage and bandwidth cost
+
+GitHub Free and Pro accounts include **10 GiB of LFS storage and 10 GiB of LFS
+bandwidth** per billing cycle, billed as metered usage (the old pre-paid data
+packs were retired); overage runs $0.07/GB stored and $0.0875/GiB downloaded.
+Both are pooled per account owner, not per repository.
+Source: [Git Large File Storage billing](https://docs.github.com/en/billing/concepts/product-billing/git-lfs)
+and [About storage and bandwidth usage](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-storage-and-bandwidth-usage).
+
+All of `images/` is ~47MB. Even if every file in it eventually lived in LFS,
+that is under 0.5% of the 10 GiB storage allowance, and a full fetch would be
+~47MB against a 10 GiB monthly bandwidth allowance — on the order of 200 full
+fetches per month before anything is billable. Today the LFS set is a single
+file under 1MB.
+
+Bandwidth is also spent far less often than it first appears: the images are
+baked into the Docker image at build time, so LFS is touched **once per build,
+on the build host**. Deploys, pod restarts, replica scale-ups and rollbacks
+pull the container image, not LFS. `originals/` is never copied into the
+container at all.
+
+Nothing here is close to the quota. This section exists so the correctness
+problem above does not get mistaken for a cost problem — the risk of LFS in
+this repository is silently broken images, not the bill.
+
 ## Layout
 
 | Directory | Ships in the container | What lives here |
@@ -15,6 +103,18 @@ cloned as a sibling directory and copies the web set into
 `build.sh` copies `../pcfweb-assets/images` and nothing else, so anything in
 `originals/` is safe to keep at whatever size it was captured at — it never
 reaches the image.
+
+### Book covers
+
+Book covers live in `images/book_covers/`, and their masters — where one
+exists — in `originals/book_covers/`, under the same filename as the
+`images/` copy. Only `distributed_computing_4_kids` has a master
+(`.webp`, because that is genuinely what the master is); the four O'Reilly
+covers ship at their native 2100x2756 and were never downscaled, so there is
+nothing to archive for them.
+
+pcfweb references covers by a path **relative to `images/`**, so a cover at
+`images/book_covers/x.jpg` is referenced as `book_covers/x.jpg`.
 
 ## Sizing rules for `images/`
 

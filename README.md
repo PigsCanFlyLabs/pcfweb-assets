@@ -47,26 +47,35 @@ thing standing between a stale checkout and a broken production site.
 
 ### Scope: which files are affected today
 
-Only files stored in LFS can turn into pointers, and today that is a **small
-and growing** subset:
+**Every binary asset in this repository is in LFS.** The history was migrated
+wholesale (`git lfs migrate import --everything`), so there is no mixed state:
+of the 90 tracked files, exactly two — `.gitattributes` and this `README.md` —
+are ordinary git blobs. All 88 others are LFS pointers, in every commit.
 
-- `.gitattributes` tracks `*.jpg`, `*.jpeg`, `*.png`, `*.gif`, `*.webp`,
-  `*.xcf` (and their uppercase spellings), so **every image added or modified
-  from now on** goes into LFS.
-- Images already committed before LFS was enabled remain ordinary git blobs.
-  They were deliberately left alone — converting them would require rewriting
-  history and force-pushing `main`, which breaks every existing clone.
+`.gitattributes` tracks `*.jpg`, `*.jpeg`, `*.png`, `*.gif`, `*.webp` and
+`*.xcf`, including their uppercase spellings — the repository really does
+contain `.JPG` files, and LFS patterns are case-sensitive on Linux.
 
-So a build host that forgets `git lfs pull` currently ships most images fine
-and a handful broken — which is *harder* to notice than a wholesale failure,
-not easier. That set grows with every image touched.
+The practical consequence is the one that matters: a checkout without git-lfs
+installed, or one where `git lfs pull` has not run, contains **nothing but
+~130-byte pointer files** — not a handful of broken images, all of them. That
+is a wholesale, obvious failure rather than a subtle partial one, which is the
+failure mode we wanted.
 
-Side effect of the mixed state: in a checkout whose index stat cache has gone
-stale, `git status` may report every pre-LFS image as modified even though the
-bytes on disk are unchanged. Git is comparing the stored raw blob against what
-the LFS clean filter would now produce. **Do not "fix" this with `git commit -a`
-or `git add -A`** — that would convert the entire back catalogue to LFS in one
-unreviewed commit. A fresh clone does not show it.
+Because history was rewritten, **every clone made before the migration is
+dead.** `git pull` will not reconcile it — it tries to merge unrelated
+histories. Delete the directory and clone again:
+
+```bash
+git lfs install                # once per machine
+rm -rf pcfweb-assets
+git clone https://github.com/PigsCanFlyLabs/pcfweb-assets.git
+```
+
+A correctly-migrated clone has a clean `git status`, and `.git` does not grow
+when you run git commands. If you see the whole back catalogue reported as
+modified, or `.git` ballooning by ~140MB after a single `git status`, you are
+on a stale pre-migration clone — re-clone rather than committing anything.
 
 ### Storage and bandwidth cost
 
@@ -77,11 +86,11 @@ Both are pooled per account owner, not per repository.
 Source: [Git Large File Storage billing](https://docs.github.com/en/billing/concepts/product-billing/git-lfs)
 and [About storage and bandwidth usage](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-storage-and-bandwidth-usage).
 
-All of `images/` is ~47MB. Even if every file in it eventually lived in LFS,
-that is under 0.5% of the 10 GiB storage allowance, and a full fetch would be
-~47MB against a 10 GiB monthly bandwidth allowance — on the order of 200 full
-fetches per month before anything is billable. Today the LFS set is a single
-file under 1MB.
+The entire LFS set is ~156MB — `images/` at ~47MB plus `originals/` at ~93MB,
+across 88 files and their historical revisions. That is about 1.5% of the
+10 GiB storage allowance, and a full fetch is ~156MB against a 10 GiB monthly
+bandwidth allowance — on the order of 60 full fetches per month before
+anything is billable.
 
 Bandwidth is also spent far less often than it first appears: the images are
 baked into the Docker image at build time, so LFS is touched **once per build,
@@ -171,6 +180,14 @@ Two things that are *not* exceptions, in case they look like it:
   and they are well within budget anyway.
 
 ## History
+
+In July 2026 the entire history was rewritten with
+`git lfs migrate import --everything`, moving all 88 binary assets into LFS in
+every commit. This replaced a short-lived additive setup in which only newly
+touched files went to LFS — that state left the back catalogue permanently
+reporting as modified and regrew `.git` by ~140MB on every `git status`, for
+the benefit of a single file. Every commit SHA changed; clones predating the
+rewrite must be recreated, not pulled.
 
 `images/` was 126MB before the July 2026 pass, almost all of it a handful of
 files stored at capture resolution (`generic-bg.jpg` alone was a 14100x3456,

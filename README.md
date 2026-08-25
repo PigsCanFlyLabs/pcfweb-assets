@@ -155,10 +155,30 @@ The current extras, all for Distributed Computing 4 Kids:
 | `..._inside_gnomes.jpg` | Interior page: the kids and gnomes in the garden | The book's own EPUB (pcfweb-book-assets), re-encoded to the JPEG settings above |
 | `..._inside_laptop.jpg` | Interior page: high-five over the laptop | Same |
 
-The five O'Reilly titles have no extras: no back-cover or interior imagery
-is published anywhere retrievable (their Amazon listings carry only front
-covers, Google Books serves "image not available" for their back covers),
-and their content is O'Reilly's, not ours to excerpt.
+The five O'Reilly titles have no extras yet, and the absence is checked,
+not forgotten. O'Reilly distributes only the FRONT cover to every public
+display channel: the Amazon galleries on .com, .in and .co.uk all carry
+exactly one image per title, Google Books answers "image not available"
+for the back cover of every print and e-book ISBN, O'Reilly's own covers
+server (`covers.oreillystatic.com/images/<id>/`) serves only `lrg.jpg` and
+the `cat.gif` animal, OpenLibrary holds a single front cover or none, and
+B&N and Flipkart bot-wall automated retrieval. The back covers exist in
+exactly two places: inside Amazon's "Look Inside" viewer (publisher-
+provided, but gated behind authenticated reader APIs), and on the books
+themselves.
+
+So the path to O'Reilly back covers is photography, not scraping: shoot or
+scan our own copies straight-on in even light, and drop the files in as
+
+    book_covers/learning_spark_1ed_back.jpg
+    book_covers/high_performance_spark_back.jpg
+    book_covers/high_performance_spark_2ed_back.jpg
+    book_covers/kubeflow_for_ml_back.jpg
+    book_covers/scaling_python_with_ray_back.jpg
+
+at the JPEG settings above. Nothing else is needed: pcfweb attaches them
+on the next deploy. Interior pages stay off limits either way -- that
+content is O'Reilly's, not ours to excerpt.
 
 ## Sizing rules for `images/`
 

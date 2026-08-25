@@ -125,6 +125,41 @@ nothing to archive for them.
 pcfweb references covers by a path **relative to `images/`**, so a cover at
 `images/book_covers/x.jpg` is referenced as `book_covers/x.jpg`.
 
+#### Extra pictures of a book
+
+A file whose name extends a cover's stem with an underscore is an
+**additional picture of that product** — its back cover, an interior page:
+
+    book_covers/distributed_computing_4_kids.jpg              <- primary cover
+    book_covers/distributed_computing_4_kids_back.jpg         <- extra
+    book_covers/distributed_computing_4_kids_inside_gnomes.jpg <- extra
+
+pcfweb attaches these automatically on deploy (`manage.py grab_book_images`,
+run at primary startup) and serves them to Google Shopping as
+`additional_image_link`s, in filename order — name them so they sort the way
+they should appear. The three DC4K SKUs (paperback, Executive Edition,
+e-book) share one primary cover, so they share the extras too.
+
+One naming caution, enforced by pcfweb rather than by anything here: a file
+that IS some product's primary cover is never adopted as an extra of another
+product (`high_performance_spark_2ed.jpg` extends `high_performance_spark`'s
+stem but is the 2nd edition's own cover) — but nothing protects a NEW file
+that merely looks like one. Never name an unrelated image so that it extends
+another book's stem.
+
+The current extras, all for Distributed Computing 4 Kids:
+
+| File | What it shows | Source |
+| --- | --- | --- |
+| `..._back.jpg` | Back cover: author bio and the pull quotes | Standard edition's own Amazon listing photo, with the watermark bands and the barcode block cropped off |
+| `..._inside_gnomes.jpg` | Interior page: the kids and gnomes in the garden | The book's own EPUB (pcfweb-book-assets), re-encoded to the JPEG settings above |
+| `..._inside_laptop.jpg` | Interior page: high-five over the laptop | Same |
+
+The five O'Reilly titles have no extras: no back-cover or interior imagery
+is published anywhere retrievable (their Amazon listings carry only front
+covers, Google Books serves "image not available" for their back covers),
+and their content is O'Reilly's, not ours to excerpt.
+
 ## Sizing rules for `images/`
 
 Everything in `images/` is copied into the container **and** duplicated by

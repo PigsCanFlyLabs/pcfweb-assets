@@ -125,6 +125,61 @@ nothing to archive for them.
 pcfweb references covers by a path **relative to `images/`**, so a cover at
 `images/book_covers/x.jpg` is referenced as `book_covers/x.jpg`.
 
+#### Extra pictures of a book
+
+A file whose name extends a cover's stem with an underscore is an
+**additional picture of that product** — its back cover, an interior page:
+
+    book_covers/distributed_computing_4_kids.jpg              <- primary cover
+    book_covers/distributed_computing_4_kids_back.jpg         <- extra
+    book_covers/distributed_computing_4_kids_inside_gnomes.jpg <- extra
+
+pcfweb attaches these automatically on deploy (`manage.py grab_book_images`,
+run at primary startup) and serves them to Google Shopping as
+`additional_image_link`s, in filename order — name them so they sort the way
+they should appear. The three DC4K SKUs (paperback, Executive Edition,
+e-book) share one primary cover, so they share the extras too.
+
+One naming caution, enforced by pcfweb rather than by anything here: a file
+that IS some product's primary cover is never adopted as an extra of another
+product (`high_performance_spark_2ed.jpg` extends `high_performance_spark`'s
+stem but is the 2nd edition's own cover) — but nothing protects a NEW file
+that merely looks like one. Never name an unrelated image so that it extends
+another book's stem.
+
+The current extras, all for Distributed Computing 4 Kids:
+
+| File | What it shows | Source |
+| --- | --- | --- |
+| `..._back.jpg` | Back cover: author bio and the pull quotes | Standard edition's own Amazon listing photo, with the watermark bands and the barcode block cropped off |
+| `..._inside_gnomes.jpg` | Interior page: the kids and gnomes in the garden | The book's own EPUB (pcfweb-book-assets), re-encoded to the JPEG settings above |
+| `..._inside_laptop.jpg` | Interior page: high-five over the laptop | Same |
+
+The five O'Reilly titles have no extras yet, and the absence is checked,
+not forgotten. O'Reilly distributes only the FRONT cover to every public
+display channel: the Amazon galleries on .com, .in and .co.uk all carry
+exactly one image per title, Google Books answers "image not available"
+for the back cover of every print and e-book ISBN, O'Reilly's own covers
+server (`covers.oreillystatic.com/images/<id>/`) serves only `lrg.jpg` and
+the `cat.gif` animal, OpenLibrary holds a single front cover or none, and
+B&N and Flipkart bot-wall automated retrieval. The back covers exist in
+exactly two places: inside Amazon's "Look Inside" viewer (publisher-
+provided, but gated behind authenticated reader APIs), and on the books
+themselves.
+
+So the path to O'Reilly back covers is photography, not scraping: shoot or
+scan our own copies straight-on in even light, and drop the files in as
+
+    book_covers/learning_spark_1ed_back.jpg
+    book_covers/high_performance_spark_back.jpg
+    book_covers/high_performance_spark_2ed_back.jpg
+    book_covers/kubeflow_for_ml_back.jpg
+    book_covers/scaling_python_with_ray_back.jpg
+
+at the JPEG settings above. Nothing else is needed: pcfweb attaches them
+on the next deploy. Interior pages stay off limits either way -- that
+content is O'Reilly's, not ours to excerpt.
+
 ## Sizing rules for `images/`
 
 Everything in `images/` is copied into the container **and** duplicated by
